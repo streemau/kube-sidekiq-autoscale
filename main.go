@@ -227,7 +227,7 @@ func main() {
 	duration := evalIntervalsParam * intervalParam
 	fsample := func(n int) error { return updateMetrics(db, n, duration) }
 
-	go monitorSidekiqStats(unquoteURI(sidekiqStatsURIParam), statsIntervalParam, fsample, forever)
+	go monitorSidekiqStats(sidekiqStatsURIParam, statsIntervalParam, fsample, forever)
 
 	fmetrics := func() (*queueMetrics, error) {
 		metrics, err := getMetrics(db, duration, statsIntervalParam)
@@ -248,7 +248,7 @@ func main() {
 		}
 		return scale(kindParam, namespaceParam, nameParam, newSize,
 			&apiContext{
-				URL:       unquoteURI(apiURLParam),
+				URL:       apiURLParam,
 				User:      apiUserParam,
 				Passwd:    apiPasswdParam,
 				TokenFile: apiTokenParam,

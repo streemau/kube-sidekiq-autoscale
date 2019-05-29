@@ -17,6 +17,7 @@ import (
 
 type SidekiqJson struct {
 	Enqueued int `json:"enqueued"`
+	Busy     int `json:"busy"`
 }
 
 type BaseJson struct {
@@ -98,5 +99,5 @@ func getEnqueued(uri string) (int, error) {
 		return 0, err
 	}
 
-	return data.Sidekiq.Enqueued, nil
+	return data.Sidekiq.Enqueued + data.Sidekiq.Busy, nil
 }
