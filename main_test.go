@@ -41,19 +41,10 @@ func TestValidateParams(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error")
 	}
-	if got, want := err.Error(), "Missing RabbitMQ URI"; got != want {
+	if got, want := err.Error(), "Missing Sidekiq Stats URI"; got != want {
 		t.Errorf("Expected error='%s', got: '%s'", want, got)
 	}
-	brokerURIParam = "amqp://"
-
-	err = validateParams()
-	if err == nil {
-		t.Fatal("Expected error")
-	}
-	if got, want := err.Error(), "Missing RabbitMQ queue name"; got != want {
-		t.Errorf("Expected error='%s', got: '%s'", want, got)
-	}
-	queueNameParam = "queue"
+	sidekiqStatsURIParam = "https://"
 
 	err = validateParams()
 	if err == nil {

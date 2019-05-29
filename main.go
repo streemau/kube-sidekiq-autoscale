@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -21,8 +20,7 @@ import (
 
 func init() {
 	setVersion()
-	flag.StringVar(&brokerURIParam, "amqp-uri", "", "RabbitMQ broker URI")
-	flag.StringVar(&queueNameParam, "amqp-queue", "", "RabbitMQ queue to measure load on an application. Use comma separator to specify multiple queues.")
+	flag.StringVar(&sidekiqStatsURIParam, "sidekiq-stats-uri", "", "Sidekiq Stats URI")
 	flag.StringVar(&apiURLParam, "api-url", "", "Kubernetes API URL")
 	flag.StringVar(&apiUserParam, "api-user", "", "username for basic authentication on Kubernetes API")
 	flag.StringVar(&apiPasswdParam, "api-passwd", "", "password for basic authentication on Kubernetes API")
@@ -35,24 +33,24 @@ func init() {
 	flag.StringVar(&kindParam, "kind", "Deployment", "type of the Kubernetes resource to autoscale")
 	flag.StringVar(&namespaceParam, "ns", "default", "Kubernetes namespace")
 	flag.IntVar(&intervalParam, "interval", 30, "time interval between Kubernetes resource scale runs in secs")
-	flag.IntVar(&thresholdParam, "threshold", -1, "number of messages on a queue representing maximum load on the autoscaled Kubernetes resource")
+	flag.IntVar(&thresholdParam, "threshold", -1, "Count of enqueued representing maximum load on the autoscaled Kubernetes resource")
 	flag.IntVar(&increaseLimitParam, "increase-limit", -1, "number of messages on a queue representing maximum load on the autocaled Kubernetes resource")
 	flag.IntVar(&decreaseLimitParam, "decrease-limit", -1, "number of messages on a queue representing maximum load on the autocaled Kubernetes resource")
 	flag.IntVar(&statsIntervalParam, "stats-interval", 5, "time interval between metrics gathering runs in seconds")
-	flag.IntVar(&evalIntervalsParam, "eval-intervals", 2, "number of autoscale intervals used to calculate average queue length")
-	flag.Float64Var(&statsCoverageParam, "stats-coverage", 0.75, "required percentage of statistics to calculate average queue length")
+	flag.IntVar(&evalIntervalsParam, "eval-intervals", 2, "number of autoscale intervals used to calculate average enqueued count")
+	flag.Float64Var(&statsCoverageParam, "stats-coverage", 0.75, "required percentage of statistics to calculate average enqueued count")
 	flag.StringVar(&dbFileParam, "db", "file::memory:?cache=shared", "sqlite3 database filename")
 	flag.StringVar(&dbDirParam, "db-dir", "", "directory for sqlite3 statistics database file")
 	flag.StringVar(&metricsListenAddr, "metrics-listen-address", ":9505", "the address to listen on for exporting prometheus metrics")
 
 	flag.BoolVar(&version, "version", false, "show version")
 
-	prometheus.MustRegister(queueSizeCount)
-	prometheus.MustRegister(queueSizeAverage)
-	prometheus.MustRegister(queueSizeCoverage)
+	prometheus.MustRegister(enqueuedCount)
+	prometheus.MustRegister(enqueuedAverage)
+	prometheus.MustRegister(enqueuedCoverage)
 	prometheus.MustRegister(buildInfo)
-	prometheus.MustRegister(queueCountSuccesses)
-	prometheus.MustRegister(queueCountFailures)
+	prometheus.MustRegister(statsSuccesses)
+	prometheus.MustRegister(statsFailures)
 	prometheus.MustRegister(pollCount)
 	prometheus.MustRegister(autoscaleErrors)
 	prometheus.MustRegister(desiredReplicas)
@@ -63,34 +61,33 @@ func init() {
 }
 
 const (
-	namespace = "amqp_autoscaler"
+	namespace = "sidekiq_autoscaler"
 )
 
 var (
-	version            bool
-	brokerURIParam     string
-	queueNameParam     string
-	apiURLParam        string
-	apiUserParam       string
-	apiPasswdParam     string
-	apiTokenParam      string
-	apiCAFileParam     string
-	apiInsecureParam   bool
-	minParam           int
-	maxParam           int
-	nameParam          string
-	kindParam          string
-	namespaceParam     string
-	intervalParam      int
-	thresholdParam     int
-	increaseLimitParam int
-	decreaseLimitParam int
-	evalIntervalsParam int
-	statsCoverageParam float64
-	statsIntervalParam int
-	dbFileParam        string
-	dbDirParam         string
-	metricsListenAddr  string
+	version              bool
+	sidekiqStatsURIParam string
+	apiURLParam          string
+	apiUserParam         string
+	apiPasswdParam       string
+	apiTokenParam        string
+	apiCAFileParam       string
+	apiInsecureParam     bool
+	minParam             int
+	maxParam             int
+	nameParam            string
+	kindParam            string
+	namespaceParam       string
+	intervalParam        int
+	thresholdParam       int
+	increaseLimitParam   int
+	decreaseLimitParam   int
+	evalIntervalsParam   int
+	statsCoverageParam   float64
+	statsIntervalParam   int
+	dbFileParam          string
+	dbDirParam           string
+	metricsListenAddr    string
 
 	buildInfo = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -121,38 +118,32 @@ var (
 			Help:      "Scaling threshold.",
 		},
 	)
-	queueSizeCount = prometheus.NewGaugeVec(
+	enqueuedCount = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Name:      "current_queue_size",
-			Help:      "Current size of target queue.",
+			Name:      "current_enqueued",
+			Help:      "Current count of enqueued jobs.",
 		},
-		[]string{"queue"},
 	)
-	queueSizeAverage = prometheus.NewGaugeVec(
+	enqueuedAverage = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Name:      "average_queue_size",
-			Help:      "Average size of target queue.",
+			Name:      "average_enqueued",
+			Help:      "Average count of enqueued jobs.",
 		},
-		[]string{"queue"},
 	)
-	queueSizeCoverage = prometheus.NewGaugeVec(
+	enqueuedCoverage = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Name:      "coverage_queue_size",
-			Help:      "Coverage size of target queue.",
+			Name:      "coverage_enqueued",
+			Help:      "Coverage count of enqueued jobs.",
 		},
-		[]string{"queue"},
 	)
 )
 
 func validateParams() error {
-	if len(brokerURIParam) == 0 {
-		return errors.New("Missing RabbitMQ URI")
-	}
-	if len(queueNameParam) == 0 {
-		return errors.New("Missing RabbitMQ queue name")
+	if len(sidekiqStatsURIParam) == 0 {
+		return errors.New("Missing Sidekiq Stats URI")
 	}
 	if len(apiURLParam) == 0 {
 		return errors.New("Missing Kubernetes API URL")
@@ -193,7 +184,7 @@ func validateParams() error {
 	return nil
 }
 
-const appName = "Kubernetes AMQP Autoscaler"
+const appName = "Kubernetes Sidekiq Autoscaler"
 
 func main() {
 	flag.Parse()
@@ -236,27 +227,28 @@ func main() {
 	duration := evalIntervalsParam * intervalParam
 	fsample := func(n int) error { return updateMetrics(db, n, duration) }
 
-	queueNames := strings.Split(queueNameParam, ",")
-	log.Printf("Summing over %d queues: %s", len(queueNames), queueNameParam)
-	go monitorQueue(unquoteURI(brokerURIParam), queueNames, statsIntervalParam, fsample, forever)
+	go monitorSidekiqStats(unquoteURI(sidekiqStatsURIParam), statsIntervalParam, fsample, forever)
 
 	fmetrics := func() (*queueMetrics, error) {
 		metrics, err := getMetrics(db, duration, statsIntervalParam)
 		if err != nil {
-			queueSizeCount.With(prometheus.Labels{"queue": queueNameParam}).Set(float64(metrics.Count))
-			queueSizeAverage.With(prometheus.Labels{"queue": queueNameParam}).Set(metrics.Average)
-			queueSizeCoverage.With(prometheus.Labels{"queue": queueNameParam}).Set(metrics.Coverage)
+			enqueuedCount.Set(float64(metrics.Count))
+			enqueuedAverage.Set(metrics.Average)
+			enqueuedCoverage.Set(metrics.Coverage)
 		}
 		return metrics, err
 	}
 
 	fscale := func(newSize int32) error {
-		bounds := &scaleBounds{Min: minParam,
+		bounds := &scaleBounds{
+			Min:           minParam,
 			Max:           maxParam,
 			IncreaseLimit: increaseLimitParam,
-			DecreaseLimit: decreaseLimitParam}
+			DecreaseLimit: decreaseLimitParam,
+		}
 		return scale(kindParam, namespaceParam, nameParam, newSize,
-			&apiContext{URL: unquoteURI(apiURLParam),
+			&apiContext{
+				URL:       unquoteURI(apiURLParam),
 				User:      apiUserParam,
 				Passwd:    apiPasswdParam,
 				TokenFile: apiTokenParam,

@@ -1,7 +1,8 @@
-# kube-amqp-autoscale
+# kube-sidekiq-autoscale
 
-Dynamically scale kubernetes resources using length of an AMQP queue (number of messages available for retrieval from the queue) to determine the load on an application/Kubernetes pod.
+Thanks to [Maciej Bogus](https://github.com/mbogus) for building [kube-amqp-autoscale](https://github.com/mbogus/kube-amqp-autoscale). This repository is a clone of his code and replaces the AMQP related code with code to monitor Sidekiq instead.
 
+Dynamically scale K8s resources using the amount of enqueued jobs to determine the load on an application/Kubernetes pod.
 
 **NOTICE**
 
@@ -11,25 +12,20 @@ If your application load is not queue-bound but rather CPU-sensitive, make sure 
 
 *Alpha*
 
-[![Build Status](https://travis-ci.org/mbogus/kube-amqp-autoscale.svg?branch=master)](https://travis-ci.org/mbogus/kube-amqp-autoscale)  [![Coverage Status](https://coveralls.io/repos/github/mbogus/kube-amqp-autoscale/badge.svg?branch=master)](https://coveralls.io/github/mbogus/kube-amqp-autoscale?branch=master)
-
-
 ## Usage
 
-The best way to use the service is by importing [automated build docker container](https://hub.docker.com/r/mbogus/kube-amqp-autoscale/).
-Please follow the instructions on the automated build page.
 
 
 ## Go get
 
-    go get github.com/mbogus/kube-amqp-autoscale
+    go get github.com/streemau/kube-sidekiq-autoscale
 
 
-## Clone from [github](https://github.com/mbogus/kube-amqp-autoscale)
+## Clone from [github](https://github.com/streemau/kube-sidekiq-autoscale)
 
-* Create directory for APT projects `mkdir -p $GOPATH/src/github.com/mbogus`
+* Create directory for APT projects `mkdir -p $GOPATH/src/github.com/streemau`
   as typical in [writing go programs](https://golang.org/doc/code.html)
-* Clone this project `git clone https://github.com/mbogus/kube-amqp-autoscale.git`
+* Clone this project `git clone https://github.com/streemau/kube-sidekiq-autoscale.git`
 
 
 ### Building on Windows
@@ -53,8 +49,7 @@ Run `make depend && make [build]`
 
 ## Runtime command-line arguments
 
-* **`amqp-uri`** required, RabbitMQ broker URI, e.g. `amqp://guest:guest@127.0.0.1:5672//`
-* **`amqp-queue`** required, RabbitMQ queue name to measure load on an application.  Use comma separator to specify multiple queues.
+* **`sidekiq-stats-uri`** required, Sidekiq Stats URI, e.g. `http://username:passwd@sidekiq-host/sidekiq/stats`
 * **`api-url`** required, Kubernetes API URL, e.g. `http://127.0.0.1:8080`
 * `api-user` optional, username for basic authentication on Kubernetes API
 * `api-passwd` optional, password for basic authentication on Kubernetes API
@@ -81,6 +76,6 @@ Run `make depend && make [build]`
 
 ## Integration tests
 
-To run intergation tests, make sure to configure access to running RabbitMQ instance,
-export environment variable `AMQP_URI=amqp://username:passwd@rabbitmq-host:5672//`
+To run integration tests, make sure to configure access to running Sidekiq instance,
+export environment variable `SIDEKIQ_STATS_URI=http://username:passwd@sidekiq-host/sidekiq/stats`
 and run `go test -tags=integration ./...`

@@ -34,7 +34,6 @@ if [ -d $(BUILD_DIR) ] ; then rm -rf $(BUILD_DIR) ; fi && \
 if [ -d $(DIST_DIR) ] ; then rm -rf $(DIST_DIR) ; fi
 
 depend:
-	go get -u -ldflags "-s -w" github.com/streadway/amqp
 	go get -u -ldflags "-s -w" github.com/mattn/go-sqlite3
 	go get -u -ldflags "-s -w" k8s.io/client-go/...
 	go get -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus
