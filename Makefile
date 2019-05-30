@@ -26,7 +26,7 @@ GOPATH ?= $(HOME)/go
 default: build
 
 build: vet
-	go build -v -buildmode=exe -ldflags "-s -w -X main.Version=$(VERSION) -X main.BuildType=$(BUILD_TYPE) -X main.Build=$(BUILD) -X main.BuildDate=$(BUILD_DATE)" -o $(TARGET)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -installsuffix 'static' -buildmode=exe -ldflags "-s -w -X main.Version=$(VERSION) -X main.BuildType=$(BUILD_TYPE) -X main.Build=$(BUILD) -X main.BuildDate=$(BUILD_DATE)" -o $(TARGET)
 
 clean:
 	go clean -i ./... && \
@@ -34,10 +34,13 @@ if [ -d $(BUILD_DIR) ] ; then rm -rf $(BUILD_DIR) ; fi && \
 if [ -d $(DIST_DIR) ] ; then rm -rf $(DIST_DIR) ; fi
 
 depend:
-	go get -u -ldflags "-s -w" github.com/mattn/go-sqlite3
-	go get -u -ldflags "-s -w" k8s.io/client-go/...
-	go get -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus
-	go get -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus/promhttp
+	go get -v -u -ldflags "-s -w" github.com/mattn/go-sqlite3
+	go get -v -u -ldflags "-s -w" k8s.io/client-go/rest/...
+	go get -v -u -ldflags "-s -w" k8s.io/client-go/kubernetes/...
+	go get -v -u -ldflags "-s -w" k8s.io/client-go/util/cert/...
+	go get -v -u -ldflags "-s -w" k8s.io/apimachinery/pkg/apis/meta/v1/...
+	go get -v -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus
+	go get -v -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus/promhttp
 	if [ -d $(GOPATH)/src/k8s.io/kubernetes ] ; then rm -rf $(GOPATH)/src/k8s.io/kubernetes ; fi && git clone --depth 1 -b v1.12.7 --single-branch -q https://github.com/kubernetes/kubernetes $(GOPATH)/src/k8s.io/kubernetes
 
 

@@ -1,4 +1,4 @@
-FROM golang
+FROM golang AS builder
 
 WORKDIR /go/src
 
@@ -9,5 +9,10 @@ RUN make depend
 COPY . .
 
 RUN make && mv .build/autoscale /go/bin
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /go/bin/autoscale /go/bin/autoscale
 
 ENTRYPOINT ["/go/bin/autoscale"]
