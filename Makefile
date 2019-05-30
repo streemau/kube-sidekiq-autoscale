@@ -26,7 +26,7 @@ GOPATH ?= $(HOME)/go
 default: build
 
 build: vet
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -installsuffix 'static' -buildmode=exe -ldflags "-s -w -X main.Version=$(VERSION) -X main.BuildType=$(BUILD_TYPE) -X main.Build=$(BUILD) -X main.BuildDate=$(BUILD_DATE)" -o $(TARGET)
+	GOOS=linux GOARCH=amd64 go build -v -installsuffix 'static' -buildmode=exe -ldflags "-s -w -X main.Version=$(VERSION) -X main.BuildType=$(BUILD_TYPE) -X main.Build=$(BUILD) -X main.BuildDate=$(BUILD_DATE)" -o $(TARGET)
 
 clean:
 	go clean -i ./... && \

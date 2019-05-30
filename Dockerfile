@@ -10,7 +10,7 @@ COPY . .
 
 RUN make && mv .build/autoscale /go/bin
 
-FROM scratch
+FROM golang
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/bin/autoscale /go/bin/autoscale
