@@ -34,15 +34,7 @@ if [ -d $(BUILD_DIR) ] ; then rm -rf $(BUILD_DIR) ; fi && \
 if [ -d $(DIST_DIR) ] ; then rm -rf $(DIST_DIR) ; fi
 
 depend:
-	go get -v -u -ldflags "-s -w" github.com/mattn/go-sqlite3
-	go get -v -u -ldflags "-s -w" k8s.io/client-go/rest/...
-	go get -v -u -ldflags "-s -w" k8s.io/client-go/kubernetes/...
-	go get -v -u -ldflags "-s -w" k8s.io/client-go/util/cert/...
-	go get -v -u -ldflags "-s -w" k8s.io/apimachinery/pkg/apis/meta/v1/...
-	go get -v -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus
-	go get -v -u -ldflags "-s -w" github.com/prometheus/client_golang/prometheus/promhttp
-	if [ -d $(GOPATH)/src/k8s.io/kubernetes ] ; then rm -rf $(GOPATH)/src/k8s.io/kubernetes ; fi && git clone --depth 1 -b v1.12.7 --single-branch -q https://github.com/kubernetes/kubernetes $(GOPATH)/src/k8s.io/kubernetes
-
+	go get -v -u -ldflags "-s -w"
 
 install:
 	go install $(TARGET)
