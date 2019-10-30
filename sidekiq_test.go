@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetEnqueuedNonExistentHost(t *testing.T) {
-	_, err := getEnqueued("http://nonexistanthost/sidekiq/stats")
+	_, err := getEnqueued("http://nonexistanthost/sidekiq/stats", "*")
 	if err == nil {
 		t.Fatalf("Error expected")
 	}
@@ -24,7 +24,7 @@ func TestGetEnqueuedNonExistentHost(t *testing.T) {
 }
 
 func TestEnqueued(t *testing.T) {
-	_, err := getEnqueued(sidekiqStatsURI())
+	_, err := getEnqueued(sidekiqStatsURI(), "*")
 	if err != nil {
 		t.Fatal(err)
 	}

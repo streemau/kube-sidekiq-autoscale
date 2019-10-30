@@ -20,7 +20,8 @@ import (
 
 func init() {
 	setVersion()
-	flag.StringVar(&sidekiqStatsURIParam, "sidekiq-stats-uri", "", "Sidekiq Stats URI")
+	flag.StringVar(&sidekiqStatsURIParam, "sidekiq-stats-uri", "", "Sidekiq Queue Stats URI (/stats/queues)")
+	flag.StringVar(&queueParam, "queue", "*", "Sidekiq Queue name")
 	flag.StringVar(&apiURLParam, "api-url", "", "Kubernetes API URL")
 	flag.StringVar(&apiUserParam, "api-user", "", "username for basic authentication on Kubernetes API")
 	flag.StringVar(&apiPasswdParam, "api-passwd", "", "password for basic authentication on Kubernetes API")
@@ -67,6 +68,7 @@ const (
 var (
 	version              bool
 	sidekiqStatsURIParam string
+	queueParam           string
 	apiURLParam          string
 	apiUserParam         string
 	apiPasswdParam       string
@@ -227,7 +229,7 @@ func main() {
 	duration := evalIntervalsParam * intervalParam
 	fsample := func(n int) error { return updateMetrics(db, n, duration) }
 
-	go monitorSidekiqStats(sidekiqStatsURIParam, statsIntervalParam, fsample, forever)
+	go monitorSidekiqStats(sidekiqStatsURIParam, queueParam, statsIntervalParam, fsample, forever)
 
 	fmetrics := func() (*queueMetrics, error) {
 		metrics, err := getMetrics(db, duration, statsIntervalParam)
