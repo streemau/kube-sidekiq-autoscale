@@ -1,6 +1,6 @@
 FROM golang AS builder
 
-WORKDIR /go/src
+WORKDIR /go/src/app
 
 ENV GO111MODULE=on
 
