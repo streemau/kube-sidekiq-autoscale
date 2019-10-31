@@ -8,7 +8,6 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/creack/pty v1.1.9 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20191011121108-aa519ddbe484 // indirect
@@ -19,7 +18,6 @@ require (
 	github.com/go-openapi/spec v0.19.4 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
-	github.com/google/btree v1.0.0 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/pprof v0.0.0-20191028172815-5e965273ee43 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
@@ -57,11 +55,13 @@ require (
 	google.golang.org/grpc v1.24.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.0.0-20191025225708-5524a3672fbb // indirect
+	k8s.io/api v0.0.0-20191025225708-5524a3672fbb
 	k8s.io/apimachinery v0.0.0-20191030190112-bb31b70367b7
-	k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
+	k8s.io/client-go v0.0.0-20190918160344-1fbdaa4c8d90
 	k8s.io/gengo v0.0.0-20191010091904-7fa3014cb28f // indirect
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d // indirect
 	k8s.io/utils v0.0.0-20191030222137-2b95a09bc58d // indirect
 	sigs.k8s.io/structured-merge-diff v0.0.0-20191023203907-336d3378ca53 // indirect
 )
+
+go 1.13
