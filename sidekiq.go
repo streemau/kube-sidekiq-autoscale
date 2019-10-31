@@ -15,15 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type SidekiqJson struct {
-	Enqueued int `json:"enqueued"`
-	Busy     int `json:"busy"`
-}
-
-type BaseJson struct {
-	Sidekiq SidekiqJson `json:"sidekiq"`
-}
-
 var (
 	statsSuccesses = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
@@ -51,14 +42,14 @@ var (
 
 type saveStat func(int) error
 
-func monitorSidekiqStats(uri string, interval int, f saveStat, quit <-chan struct{}) {
+func monitorSidekiqStats(uri string, queue string, interval int, f saveStat, quit <-chan struct{}) {
 	for {
 		select {
 		case <-quit:
 			return
 		case <-time.After(time.Duration(interval) * time.Second):
 			errored := false
-			enqueued, err := getEnqueued(uri)
+			enqueued, err := getEnqueued(uri, queue)
 
 			if err != nil {
 				statsFailures.Inc()
@@ -81,7 +72,7 @@ func monitorSidekiqStats(uri string, interval int, f saveStat, quit <-chan struc
 	}
 }
 
-func getEnqueued(uri string) (int, error) {
+func getEnqueued(uri string, queue string) (int, error) {
 	response, err := http.Get(uri)
 
 	if err != nil {
@@ -92,12 +83,22 @@ func getEnqueued(uri string) (int, error) {
 
 	body, err := ioutil.ReadAll(response.Body)
 
-	data := &BaseJson{}
-	err = json.Unmarshal([]byte(body), data)
+	var data map[string]interface{}
+	err = json.Unmarshal([]byte(body), &data)
 
 	if err != nil {
 		return 0, err
 	}
 
-	return data.Sidekiq.Enqueued + data.Sidekiq.Busy, nil
+	count := 0
+
+	if queue == "*" {
+		for key, value := range data {
+			count += int(value.(float64))
+		}
+	} else {
+		count = int(data[queue].(float64))
+	}
+
+	return count, nil
 }
