@@ -1,4 +1,4 @@
-FROM golang AS builder
+FROM golang:1.13 AS builder
 
 WORKDIR /go/src/app
 
@@ -14,7 +14,7 @@ COPY . .
 
 RUN make && mv .build/autoscale /go/bin
 
-FROM golang
+FROM golang:1.13
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/bin/autoscale /go/bin/autoscale
