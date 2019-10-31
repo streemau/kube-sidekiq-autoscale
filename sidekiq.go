@@ -93,7 +93,7 @@ func getEnqueued(uri string, queue string) (int, error) {
 	count := 0
 
 	if queue == "*" {
-		for key, value := range data {
+		for _, value := range data {
 			count += int(value.(float64))
 		}
 	} else {
