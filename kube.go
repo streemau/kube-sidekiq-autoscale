@@ -73,7 +73,7 @@ func scaleDeployments(c *kubernetes.Clientset, ns string, name string, newSize i
 
 	deploymentStatusType := deployment.Status.Conditions[len(deployment.Status.Conditions)-1].Type
 
-	if deploymentStatusType != "Available" {
+	if deploymentStatusType == "Available" || deploymentStatusType == "Progressing" {
 		log.Printf("Not scaling, Deployment Status Type is '%s'", deploymentStatusType)
 
 		return nil
