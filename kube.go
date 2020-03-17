@@ -71,14 +71,6 @@ func scaleDeployments(c *kubernetes.Clientset, ns string, name string, newSize i
 		return err
 	}
 
-	deploymentStatusType := deployment.Status.Conditions[len(deployment.Status.Conditions)-1].Type
-
-	if deploymentStatusType == "Available" || deploymentStatusType == "Progressing" {
-		log.Printf("Not scaling, Deployment Status Type is '%s'", deploymentStatusType)
-
-		return nil
-	}
-
 	replicas := b.newSize(*deployment.Spec.Replicas, newSize)
 	if replicas != *deployment.Spec.Replicas {
 		log.Printf("Scaling deployment '%s' from %d to %d replicas", name, *deployment.Spec.Replicas, replicas)
