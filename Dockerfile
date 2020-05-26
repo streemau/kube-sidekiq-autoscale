@@ -8,6 +8,8 @@ COPY Makefile .
 COPY go.mod .
 COPY go.sum .
 
+RUN go get -u k8s.io/client-go@v0.17.2 github.com/googleapis/gnostic@v0.3.1 ./...
+
 RUN make depend
 
 COPY . .
